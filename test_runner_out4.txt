@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html><head>
+  <meta charset="utf-8">
+  <title>Test Runner</title>
+</head>
+<body>
+  <div id="test-results">RUNNING
+Testing raw indexedDB.open...</div>
+  <script type="module">
+    try {
+      // 1. Import all modules to test for syntax / import errors
+      const resultsEl = document.getElementById('test-results');
+      const log = (msg) => { resultsEl.textContent += '\n' + msg; console.log(msg); };
+
+      log('Testing raw indexedDB.open...');
+      await new Promise((res, rej) => {
+        const req = indexedDB.open('RawTestDB', 1);
+        req.onupgradeneeded = (e) => log('raw onupgradeneeded fired');
+        req.onsuccess = (e) => {
+          log('raw onsuccess fired: ' + e.target.result.name);
+          e.target.result.close();
+          res();
+        };
+        req.onerror = (e) => {
+          log('raw onerror fired: ' + e.target.error);
+          rej(e.target.error);
+        };
+        req.onblocked = (e) => log('raw onblocked fired');
+      });
+
+      log('Importing Database module...');
+      const { Database } = await import('./js/database/db.js');
+      const { STORES } = await import('./js/database/schema.js');
+      log('Calling Database.open()...');
+      const db = await Database.open();
+      log('Database.open() SUCCESS: ' + db.name);
+
+      log('Calling Database.getAll(STORES.PROJECTS)...');
+      const projects = await Database.getAll(STORES.PROJECTS);
+      log('Projects count: ' + projects.length);
+
+      document.getElementById('test-results').textContent += '\nALL TESTS PASSED!';
+
+      const testDiv = document.createElement('div');
+      document.body.appendChild(testDiv);
+
+      log('Testing WelcomeModule.render()...');
+      WelcomeModule.render(testDiv, () => log('onOpenApp callback fired'));
+      log('WelcomeModule rendered. Checking buttons...');
+
+      const openBtn = testDiv.querySelector('#welcomeHeroOpenBtn');
+      const installBtn = testDiv.querySelector('#welcomeHeroInstallBtn');
+      log('Open btn found: ' + Boolean(openBtn) + ', Install btn found: ' + Boolean(installBtn));
+
+      log('Clicking Open btn...');
+      openBtn.click();
+
+      log('Testing DashboardModule.render()...');
+      await DashboardModule.render(testDiv, projects[0] || null, () => {});
+      log('DashboardModule rendered successfully. Length: ' + testDiv.innerHTML.length);
+
+      document.getElementById('test-results').textContent = 'SUCCESS:\n' + results.join('\n');
+    } catch (err) {
+      console.error('Test error:', err);
+      document.getElementById('test-results').textContent = 'ERROR:\n' + err.stack;
+    }
+  </script>
+
+
+</body></html>

@@ -1,0 +1,58 @@
+/* ==========================================================================
+   Data Journey - Print & PDF Stylesheet
+   ========================================================================== */
+
+@media print {
+  /* Hide non-printable UI elements */
+  .sidebar,
+  .top-header,
+  .offline-status-banner,
+  .btn,
+  .modal-overlay,
+  .toast-container,
+  .menu-toggle-btn,
+  .quick-action-bar,
+  .timer-widget {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt;
+  }
+
+  .main-wrapper {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .main-content {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+
+  .card {
+    border: 1px solid #cccccc !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .metric-card {
+    border: 1px solid #cccccc !important;
+    page-break-inside: avoid;
+  }
+
+  .badge {
+    border: 1px solid #333333 !important;
+    color: #000000 !important;
+    background: #eeeeee !important;
+  }
+
+  a {
+    text-decoration: none !important;
+    color: #000000 !important;
+  }
+}

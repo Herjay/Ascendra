@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Ascendra Button & Action Test Suite</title>
+  <link rel="stylesheet" href="./assets/css/tokens.css">
+  <link rel="stylesheet" href="./assets/css/base.css">
+  <link rel="stylesheet" href="./assets/css/components.css">
+  <link rel="stylesheet" href="./assets/css/welcome.css">
+</head>
+<body>
+  <div id="test-output" style="font-family: monospace; white-space: pre; padding: 20px; background: #0f172a; color: #f8fafc; font-size: 13px;">RUNNING TESTS...</div>
+  <div id="test-container" style="display: none;"></div>
+
+  <script type="module">
+    const output = document.getElementById('test-output');
+    const container = document.getElementById('test-container');
+    const logs = [];
+
+    window.addEventListener('error', (e) => {
+      log(`GLOBAL WINDOW ERROR: ${e.message} at ${e.filename}:${e.lineno}:${e.colno}`, 'ERROR');
+      fetch('/save_test_result', { method: 'POST', body: logs.join('\n') });
+    });
+    window.addEventListener('unhandledrejection', (e) => {
+      log(`GLOBAL UNHANDLED REJECTION: ${e.reason ? (e.reason.stack || e.reason.message || e.reason) : e}`, 'ERROR');
+      fetch('/save_test_result', { method: 'POST', body: logs.join('\n') });
+    });
+
+    function log(msg, status = 'INFO') {
+      const line = `[${status}] ${msg}`;
+      logs.push(line);
+      output.textContent = logs.join('\n');
+      console.log(line);
+    }
+
+    function assert(cond, msg) {
+      if (cond) {
+        log(`PASS: ${msg}`, 'PASS');
+      } else {
+        log(`FAIL: ${msg}`, 'FAIL');
+        throw new Error(`Assertion failed: ${msg}`);
+      }
+    }
+
+    async function runTests() {
+      try {
+        log('Starting Ascendra Button Test Suite...');
+
+        // 1. Initialize Database
+        const { Database } = await import('./js/database/db.js');
+        const { STORES } = await import('./js/database/schema.js');
+        const db = await Database.open();
+        assert(db && db.name === 'DataJourneyDB', 'IndexedDB connected');
+
+        // Ensure active project exists
+        let projects = await Database.getAll(STORES.PROJECTS);
+        let activeProject = projects[0];
+        if (!activeProject) {
+          log('Loading demo dataset...');
+          const { getDemoDataset } = await import('./js/utils/demoData.js');
+          const demo = getDemoDataset();
+          await Database.bulkPut(STORES.PROJECTS, demo.projects);
+          await Database.bulkPut(STORES.DAILY_PROGRESS, demo.dailyProgress);
+          await Database.bulkPut(STORES.TASKS, demo.tasks);
+          await Database.bulkPut(STORES.GOALS, demo.goals);
+          await Database.bulkPut(STORES.ISSUES, demo.issues);
+          await Database.bulkPut(STORES.BREAKTHROUGHS, demo.breakthroughs);
+          projects = await Database.getAll(STORES.PROJECTS);
+          activeProject = projects[0];
+        }
+        assert(activeProject, `Active project available: ${activeProject.name}`);
+
+        // ==========================================
+        // TEST 1: Welcome Page Buttons
+        // ==========================================
+        log('--- Testing Welcome Page Buttons ---');
+        const { WelcomeModule } = await import('./js/modules/welcome.js');
+        let openAppCalled = false;
+        WelcomeModule.render(container, () => { openAppCalled = true; });
+
+        const heroOpenBtn = container.querySelector('#welcomeHeroOpenBtn');
+        assert(heroOpenBtn, 'Welcome Hero Open button exists');
+        heroOpenBtn.click();
+        assert(openAppCalled, 'Hero Open button triggered onOpenApp');
+
+        const heroInstallBtn = container.querySelector('#welcomeHeroInstallBtn');
+        assert(heroInstallBtn, 'Welcome Hero Install button exists');
+        heroInstallBtn.click();
+        const infoModal = document.querySelector('#genericInfoModal');
+        assert(infoModal && infoModal.classList.contains('active'), 'Install modal opened');
+        const confirmBtn = infoModal.querySelector('#genericInfoConfirmBtn');
+        assert(confirmBtn, 'Modal confirm button exists');
+        confirmBtn.click();
+        assert(!infoModal.classList.contains('active'), 'Install modal closed on confirm');
+
+        const installPwaBtn = container.querySelector('#welcomeInstallPwaBtn');
+        if (installPwaBtn) {
+          installPwaBtn.click();
+          assert(infoModal.classList.contains('active'), 'Section Install PWA button opened modal');
+          const closeBtn = infoModal.querySelector('#genericInfoCloseBtn');
+          closeBtn.click();
+          assert(!infoModal.classList.contains('active'), 'Install modal closed on X');
+        }
+
+        // ==========================================
+        // TEST 2: Dashboard Buttons
+        // ==========================================
+        log('--- Testing Dashboard Buttons ---');
+        const { DashboardModule } = await import('./js/modules/dashboard.js');
+        await DashboardModule.render(container, activeProject, () => {});
+
+        const recordBtn = container.querySelector('#dashRecordProgressBtn');
+        assert(recordBtn, 'Dashboard Record Progress button exists');
+        recordBtn.click();
+        const dailyModal = document.querySelector('#dailyModal');
+        assert(dailyModal && dailyModal.classList.contains('active'), 'Daily modal opened from dashboard');
+        dailyModal.querySelector('#closeDailyModalBtn').click();
+        assert(!dailyModal.classList.contains('active'), 'Daily modal closed from dashboard');
+
+        const logTodayBtn = container.querySelector('#dashLogTodayBtn');
+        if (logTodayBtn) {
+          logTodayBtn.click();
+          assert(dailyModal.classList.contains('active'), 'Log Today button opened modal');
+          dailyModal.querySelector('#cancelDailyModalBtn').click();
+          assert(!dailyModal.classList.contains('active'), 'Daily modal cancelled');
+        }
+
+        // ==========================================
+        // TEST 3: Projects Page Buttons
+        // ==========================================
+        log('--- Testing Projects Page Buttons ---');
+        const { ProjectsModule } = await import('./js/modules/projects.js');
+        await ProjectsModule.render(container, activeProject, () => {});
+
+        const newProjBtn = container.querySelector('#newProjectBtn');
+        assert(newProjBtn, '+ New Project button exists');
+        newProjBtn.click();
+        const projModal = document.querySelector('#projectModal');
+        assert(projModal && projModal.classList.contains('active'), 'Project modal opened');
+        projModal.querySelector('#closeProjModalBtn').click();
+        assert(!projModal.classList.contains('active'), 'Project modal closed');
+
+        // ==========================================
+        // TEST 4: Daily Progress Buttons
+        // ==========================================
+        log('--- Testing Daily Progress Buttons ---');
+        const { DailyModule } = await import('./js/modules/daily.js');
+        await DailyModule.render(container, activeProject);
+
+        const newDailyBtn = container.querySelector('#newDailyRecordBtn');
+        assert(newDailyBtn, '+ Record Daily button exists');
+        newDailyBtn.click();
+        assert(dailyModal.classList.contains('active'), 'Daily modal opened from daily view');
+        dailyModal.querySelector('#closeDailyModalBtn').click();
+        assert(!dailyModal.classList.contains('active'), 'Daily modal closed');
+
+        // ==========================================
+        // TEST 5: Tasks Page Buttons
+        // ==========================================
+        log('--- Testing Tasks Page Buttons ---');
+        const { TasksModule } = await import('./js/modules/tasks.js');
+        await TasksModule.render(container, activeProject);
+
+        const newTaskBtn = container.querySelector('#newTaskBtn');
+        assert(newTaskBtn, '+ Add Task button exists');
+        newTaskBtn.click();
+        const taskModal = document.querySelector('#taskModal');
+        assert(taskModal && taskModal.classList.contains('active'), 'Task modal opened');
+        taskModal.querySelector('#closeTaskModalBtn').click();
+        assert(!taskModal.classList.contains('active'), 'Task modal closed');
+
+        // Test filter buttons
+        const todoTab = container.querySelector('[data-filter="Todo"]');
+        assert(todoTab, 'Tasks Todo filter tab exists');
+        todoTab.click();
+        assert(container.dataset.filterStatus === 'Todo', 'Filter status updated to Todo');
+
+        // ==========================================
+        // TEST 6: Goals Page Buttons
+        // ==========================================
+        log('--- Testing Goals Page Buttons ---');
+        const { GoalsModule } = await import('./js/modules/goals.js');
+        await GoalsModule.render(container, activeProject);
+
+        const newGoalBtn = container.querySelector('#newGoalBtn');
+        assert(newGoalBtn, '+ Add Goal button exists');
+        newGoalBtn.click();
+        const goalModal = document.querySelector('#goalModal');
+        assert(goalModal && goalModal.classList.contains('active'), 'Goal modal opened');
+        goalModal.querySelector('#closeGoalModalBtn').click();
+        assert(!goalModal.classList.contains('active'), 'Goal modal closed');
+
+        // ==========================================
+        // TEST 7: Issues / Breakthroughs Buttons
+        // ==========================================
+        log('--- Testing Issues / Breakthroughs Buttons ---');
+        const { IssuesModule } = await import('./js/modules/issues.js');
+        await IssuesModule.render(container, activeProject);
+
+        const newIssueBtn = container.querySelector('#newIssueBtn');
+        assert(newIssueBtn, '+ Log Issue button exists');
+        newIssueBtn.click();
+        const issueModal = document.querySelector('#issueModal');
+        assert(issueModal && issueModal.classList.contains('active'), 'Issue modal opened');
+        issueModal.querySelector('#closeIssueModalBtn').click();
+        assert(!issueModal.classList.contains('active'), 'Issue modal closed');
+
+        const newBreakthroughBtn = container.querySelector('#newBreakthroughBtn');
+        assert(newBreakthroughBtn, '+ Add Breakthrough button exists');
+        newBreakthroughBtn.click();
+        const btModal = document.querySelector('#breakthroughModal');
+        assert(btModal && btModal.classList.contains('active'), 'Breakthrough modal opened');
+        btModal.querySelector('#closeBtModalBtn').click();
+        assert(!btModal.classList.contains('active'), 'Breakthrough modal closed');
+
+        // Test Tab switcher
+        const btTab = container.querySelector('[data-tab="breakthroughs"]');
+        assert(btTab, 'Breakthroughs tab exists');
+        btTab.click();
+        assert(container.dataset.activeTab === 'breakthroughs', 'Active tab changed to breakthroughs');
+
+        // ==========================================
+        // TEST 8: Time Tracker Buttons
+        // ==========================================
+        log('--- Testing Time Tracker Buttons ---');
+        const { TimeTrackerModule } = await import('./js/modules/timeTracker.js');
+        await TimeTrackerModule.render(container, activeProject);
+
+        const timerToggleBtn = container.querySelector('#timerToggleBtn');
+        assert(timerToggleBtn, 'Stopwatch start button exists');
+        timerToggleBtn.click();
+        assert(timerToggleBtn.textContent.includes('Pause'), 'Timer toggled to running');
+        timerToggleBtn.click();
+        assert(timerToggleBtn.textContent.includes('Resume'), 'Timer toggled to paused');
+
+        const timerResetBtn = container.querySelector('#timerResetBtn');
+        assert(timerResetBtn, 'Timer reset button exists');
+        timerResetBtn.click();
+
+        const manualTimeBtn = container.querySelector('#manualLogTimeBtn');
+        assert(manualTimeBtn, 'Manual time button exists');
+        manualTimeBtn.click();
+        const timeModal = document.querySelector('#timeEntryModal');
+        assert(timeModal && timeModal.classList.contains('active'), 'Time modal opened');
+        timeModal.querySelector('#closeTimeModalBtn').click();
+        assert(!timeModal.classList.contains('active'), 'Time modal closed');
+
+        // ==========================================
+        // TEST 9: Calendar Buttons
+        // ==========================================
+        log('--- Testing Calendar Buttons ---');
+        const { CalendarModule } = await import('./js/modules/calendar.js');
+        await CalendarModule.render(container, activeProject);
+
+        const prevMonthBtn = container.querySelector('#calPrevMonthBtn');
+        const nextMonthBtn = container.querySelector('#calNextMonthBtn');
+        const todayBtn = container.querySelector('#calTodayBtn');
+        assert(prevMonthBtn && nextMonthBtn && todayBtn, 'Calendar navigation buttons exist');
+        prevMonthBtn.click();
+        nextMonthBtn.click();
+        todayBtn.click();
+        log('Calendar navigation buttons clicked successfully');
+
+        // ==========================================
+        // TEST 10: Backup & Settings Buttons
+        // ==========================================
+        log('--- Testing Backup Buttons ---');
+        const { BackupModule } = await import('./js/modules/backup.js');
+        await BackupModule.render(container, activeProject, () => {});
+
+        const uploadLogoBtn = container.querySelector('#uploadLogoBtn');
+        const resetLogoBtn = container.querySelector('#resetLogoBtn');
+        const exportBtn = container.querySelector('#exportBackupBtn');
+        assert(uploadLogoBtn && resetLogoBtn && exportBtn, 'Backup action buttons exist');
+
+        // ==========================================
+        // TEST 11: End-to-End Form Submissions & CRUD
+        // ==========================================
+        log('--- Testing Form Submissions & Data Storage ---');
+
+        // Test creating & deleting a task
+        await TasksModule.render(container, activeProject);
+        container.querySelector('#newTaskBtn').click();
+        const taskForm = document.querySelector('#taskForm');
+        taskForm.querySelector('#taskTitle').value = 'Automated Test Task';
+        taskForm.querySelector('#taskPriority').value = 'High';
+        taskForm.dispatchEvent(new Event('submit', { cancelable: true }));
+        await new Promise(r => setTimeout(r, 100));
+
+        let tasksAfter = await Database.getAll(STORES.TASKS);
+        let createdTask = tasksAfter.find(t => t.title === 'Automated Test Task');
+        assert(createdTask, 'Task successfully saved to IndexedDB via form submit');
+
+        // Test toggling task completion checkbox
+        await TasksModule.render(container, activeProject);
+        const taskCb = container.querySelector(`.task-checkbox[data-id="${createdTask.id}"]`);
+        assert(taskCb, 'Task checkbox rendered');
+        taskCb.checked = true;
+        taskCb.dispatchEvent(new Event('change'));
+        await new Promise(r => setTimeout(r, 100));
+        let updatedTask = await Database.get(STORES.TASKS, createdTask.id);
+        assert(updatedTask && updatedTask.status === 'Completed', 'Task checkbox updated status to Completed');
+
+        // Test deleting task
+        await Database.delete(STORES.TASKS, createdTask.id);
+        assert(!(await Database.get(STORES.TASKS, createdTask.id)), 'Task deleted cleanly');
+
+        // Test creating & deleting an Issue
+        await IssuesModule.render(container, activeProject);
+        container.querySelector('#newIssueBtn').click();
+        const issueForm = document.querySelector('#issueForm');
+        issueForm.querySelector('#issueTitle').value = 'Automated Blocker Issue';
+        issueForm.dispatchEvent(new Event('submit', { cancelable: true }));
+        await new Promise(r => setTimeout(r, 100));
+        let issuesAfter = await Database.getAll(STORES.ISSUES);
+        let createdIssue = issuesAfter.find(i => i.title === 'Automated Blocker Issue');
+        assert(createdIssue, 'Issue successfully saved to IndexedDB via form submit');
+        await Database.delete(STORES.ISSUES, createdIssue.id);
+        assert(!(await Database.get(STORES.ISSUES, createdIssue.id)), 'Issue deleted cleanly');
+
+        // Test creating & deleting a Goal
+        await GoalsModule.render(container, activeProject);
+        container.querySelector('#newGoalBtn').click();
+        const goalForm = document.querySelector('#goalForm');
+        goalForm.querySelector('#goalTitle').value = 'Automated Milestone Goal';
+        goalForm.dispatchEvent(new Event('submit', { cancelable: true }));
+        await new Promise(r => setTimeout(r, 100));
+        let goalsAfter = await Database.getAll(STORES.GOALS);
+        let createdGoal = goalsAfter.find(g => g.title === 'Automated Milestone Goal');
+        assert(createdGoal, 'Goal successfully saved to IndexedDB via form submit');
+        await Database.delete(STORES.GOALS, createdGoal.id);
+        assert(!(await Database.get(STORES.GOALS, createdGoal.id)), 'Goal deleted cleanly');
+
+        // Test creating & deleting a Breakthrough
+        await IssuesModule.render(container, activeProject);
+        container.querySelector('#newBreakthroughBtn').click();
+        const btForm = document.querySelector('#btForm');
+        btForm.querySelector('#btTitle').value = 'Automated Breakthrough Win';
+        btForm.dispatchEvent(new Event('submit', { cancelable: true }));
+        await new Promise(r => setTimeout(r, 100));
+        let btsAfter = await Database.getAll(STORES.BREAKTHROUGHS);
+        let createdBt = btsAfter.find(b => b.title === 'Automated Breakthrough Win');
+        assert(createdBt, 'Breakthrough successfully saved to IndexedDB via form submit');
+        await Database.delete(STORES.BREAKTHROUGHS, createdBt.id);
+        assert(!(await Database.get(STORES.BREAKTHROUGHS, createdBt.id)), 'Breakthrough deleted cleanly');
+
+        // Test creating & deleting a Time Entry
+        await TimeTrackerModule.render(container, activeProject);
+        container.querySelector('#manualLogTimeBtn').click();
+        const timeForm = document.querySelector('#timeEntryForm');
+        timeForm.querySelector('#timeDurationMins').value = '45';
+        timeForm.querySelector('#timeDescription').value = 'Automated Study Session';
+        timeForm.dispatchEvent(new Event('submit', { cancelable: true }));
+        await new Promise(r => setTimeout(r, 100));
+        let timeAfter = await Database.getAll(STORES.TIME_ENTRIES);
+        let createdTime = timeAfter.find(te => te.description === 'Automated Study Session');
+        assert(createdTime && createdTime.durationMinutes === 45, 'Time entry successfully saved to IndexedDB via form submit');
+        await Database.delete(STORES.TIME_ENTRIES, createdTime.id);
+        assert(!(await Database.get(STORES.TIME_ENTRIES, createdTime.id)), 'Time entry deleted cleanly');
+
+        // Test creating a new Project
+        await ProjectsModule.render(container, activeProject);
+        container.querySelector('#newProjectBtn').click();
+        const projForm = document.querySelector('#projectForm');
+        projForm.querySelector('#projName').value = 'Automated Test Project';
+        projForm.dispatchEvent(new Event('submit', { cancelable: true }));
+        await new Promise(r => setTimeout(r, 100));
+        let projsAfter = await Database.getAll(STORES.PROJECTS);
+        let createdProj = projsAfter.find(p => p.name === 'Automated Test Project');
+        assert(createdProj, 'Project successfully saved to IndexedDB via form submit');
+        await Database.delete(STORES.PROJECTS, createdProj.id);
+        assert(!(await Database.get(STORES.PROJECTS, createdProj.id)), 'Project deleted cleanly');
+
+        // Test creating a Daily Progress Record
+        await DailyModule.render(container, activeProject);
+        container.querySelector('#newDailyRecordBtn').click();
+        const dailyForm = document.querySelector('#dailyForm');
+        dailyForm.querySelector('#dailyDayNumber').value = 99;
+        dailyForm.querySelector('#dailySection').value = 'Automated Daily Test Section';
+        dailyForm.dispatchEvent(new Event('submit', { cancelable: true }));
+        await new Promise(r => setTimeout(r, 100));
+        let dailyAfter = await Database.getAll(STORES.DAILY_PROGRESS);
+        let createdDaily = dailyAfter.find(d => d.sectionWorkedOn === 'Automated Daily Test Section');
+        assert(createdDaily, 'Daily Progress successfully saved to IndexedDB via form submit');
+        await Database.delete(STORES.DAILY_PROGRESS, createdDaily.id);
+        assert(!(await Database.get(STORES.DAILY_PROGRESS, createdDaily.id)), 'Daily record deleted cleanly');
+
+        log('-------------------------------------------');
+        log('ALL BUTTON, FORM, MODAL & CRUD TESTS COMPLETED SUCCESSFULLY!', 'COMPLETE');
+        await fetch('/save_test_result', { method: 'POST', body: logs.join('\n') });
+      } catch (err) {
+        log(`CRITICAL ERROR: ${err.message}\n${err.stack}`, 'ERROR');
+        await fetch('/save_test_result', { method: 'POST', body: logs.join('\n') });
+      }
+    }
+
+    runTests();
+  </script>
+</body>
+</html>

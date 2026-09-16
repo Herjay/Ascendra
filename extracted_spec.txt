@@ -1,0 +1,387 @@
+﻿DATA JOURNEY
+Product Requirements & Technical Development Specification
+Offline-First • Multi-Project • Installable • Shareable
+Project
+Data Journey
+Initial Use Case
+35-Day Data Analyst Learning Journey
+Primary Platform
+Offline-first web application / PWA
+Core Storage
+IndexedDB
+Document Purpose
+Master specification for Antigravity development
+1. Executive Summary
+Data Journey is a standalone, offline-first project and progress tracker designed to support a long-term journey of learning, project development and personal productivity. Its first use case is a 35-hour Data Analytics course planned as one hour per day for 35 days. The product must not be hardcoded around this challenge: it must support multiple projects and remain useful for learning, portfolio work, software development, research, business and other projects.
+The application should be installable as a Progressive Web App (PWA), operate without an internet connection after its assets are available locally, keep user data locally, and provide robust export/import and backup/restore capabilities. The goal is a functional product—not a visual prototype.
+2. Product Vision
+Transform everyday work and learning activity into a structured record of progress, reflection and growth.
+Track what was planned, what was done and how long it took.
+Capture goals, tasks, issues, solutions and breakthroughs.
+Make consistency visible through daily activity and streaks.
+Provide useful analytics without requiring cloud services.
+Keep the user's data portable and under the user's control.
+Support the initial 35-day learning challenge while remaining useful indefinitely.
+3. Initial 35-Day Data Analyst Journey
+Setting
+Initial Value
+Project name
+35-Day Data Analyst Journey
+Project type
+Learning
+Course duration
+35 hours
+Planned duration
+35 days
+Daily target
+1 hour
+Total target
+35 hours
+4. Core Requirements
+Offline-first operation.
+Standalone/self-sufficient architecture.
+Installable PWA experience.
+No mandatory backend, authentication, cloud database or third-party API.
+Support multiple projects.
+Persistent local data storage.
+Export/import and backup/restore.
+Responsive desktop, tablet and mobile interface.
+Light, dark and system themes.
+Complete documentation and testing.
+5. Functional Modules
+5.1 Dashboard
+Total projects
+Active/completed projects
+Hours planned and logged
+Overall progress
+Today's progress
+Current and longest streak
+Completed/outstanding tasks
+Open issues
+Recent breakthroughs
+Recent activity
+Useful progress/time visualizations
+5.2 Projects
+Unlimited projects
+Project types, status and priority
+Start/target/completion dates
+Target vs actual hours
+Goals, tasks, issues, breakthroughs, daily records, notes and tags
+Project-level analytics
+5.3 Daily Progress
+Date and day number
+Planned/actual hours
+Section worked on
+Tasks planned/completed
+Daily goal
+What I learned
+Breakthrough
+Challenge/issue
+Notes
+Daily status
+Completion percentage
+5.4 Tasks
+Create/edit/delete
+Status
+Priority
+Due date
+Estimated/actual hours
+Category/tags
+Notes
+Search/filter/sort
+5.5 Goals
+Goal and description
+Target date
+Status
+Progress
+Priority
+Completion date
+Notes
+5.6 Issues / Challenges
+Title/description
+Date identified
+Severity
+Status
+Possible and actual solution
+Resolution date
+Notes
+5.7 Breakthroughs
+Title
+Description
+Date
+Category
+Related task
+Importance
+Notes
+Timeline/dashboard visibility
+5.8 Time Tracking
+Date/project/task
+Start/end time
+Duration
+Manual duration
+Description/category
+Store internally in minutes
+5.9 Calendar
+Completed, partial, missed and planned days
+Deadlines
+Open daily record by date
+5.10 Activity Timeline
+Chronological record of tasks, issues, breakthroughs and daily progress
+5.11 Notes
+Simple project notes
+Observations, ideas, lessons and resources
+5.12 Search & Filtering
+Global search across projects, tasks, goals, issues, breakthroughs, notes and daily records
+Filters by project, date, status, priority, category and tags
+6. Learning Mode
+Learning projects should support course duration, number of days, daily target and total target hours. For the initial project, progress is primarily based on actual hours divided by target hours.
+Remaining days and hours
+Expected completion date
+Average daily study time
+Ahead/behind schedule indicator
+Current and longest streak
+Days completed, missed and active
+7. Project Health
+On Track — progress is consistent with schedule.
+At Risk — progress is falling behind.
+Behind — significantly behind schedule.
+Ahead — progressing faster than expected.
+Document the calculation and keep it configurable rather than hiding the logic.
+8. Data Model
+ProjectTaskGoalDailyProgressTimeEntryIssueBreakthroughNoteTagActivitySettings
+Use unique identifiers (preferably UUIDs) and createdAt/updatedAt timestamps where appropriate. Define object stores, indexes, relationships and version/migration strategy in docs/database.md.
+9. Recommended Technology & Architecture
+HTML, CSS and modular JavaScript.
+IndexedDB as the primary persistent local database.
+localStorage only for small preferences where appropriate.
+Service worker for offline caching.
+Web App Manifest for installability.
+Avoid MySQL, PostgreSQL, Firebase, Supabase, MongoDB or external APIs for core functionality.
+A framework may be used only if it materially improves maintainability; avoid unnecessary complexity.
+Separate UI, application logic, storage, analytics, services and utilities.
+10. Suggested Folder Structure
+data-journey/├── index.html├── manifest.json├── service-worker.js├── README.md├── LICENSE├── assets/├── css/├── js/│   ├── app.js│   ├── router.js│   ├── database/│   ├── modules/│   ├── services/│   └── utils/└── docs/    ├── architecture.md    ├── database.md    ├── installation.md    ├── user-guide.md    ├── development.md    ├── testing.md    └── deployment.md
+11. User Interface & UX
+Modern, elegant, professional and information-rich without looking like a generic CRUD admin panel.
+Desktop: sidebar/navigation layout.
+Mobile: responsive navigation.
+Touch-friendly controls.
+Light, dark and system themes.
+Clear empty states and friendly error messages.
+Accessible forms, semantic HTML, keyboard navigation, visible focus states and suitable contrast.
+Use animations sparingly to reinforce feedback and progress.
+12. Dashboard Layout
+Header with date and quick action: Record Progress.
+Statistics: Active Projects, Hours Logged, Tasks Completed, Current Streak.
+Current project card with progress, hours and schedule health.
+Today's Focus with tasks, daily target and hours logged.
+Recent Activity containing tasks, issues, breakthroughs and daily records.
+13. Quick Actions
+New Project
+Record Progress
+Add Task
+Add Goal
+Log Hours
+Record Issue
+Record Breakthrough
+14. PWA Requirements
+manifest.json with name, short name, description, start URL, display mode, theme/background colors and icons.
+Service worker that caches application assets and supports offline operation.
+Installable where supported by the browser/OS.
+Do not falsely claim that opening index.html directly provides full PWA behavior; document local-server/HTTPS requirements accurately.
+The installed app should open in an app-like window where supported.
+15. Data Ownership, Backup & Recovery
+All core data stays local.
+Export all user data to a portable JSON backup.
+Import must validate the backup before changing data.
+Support restore/replace and, if practical, merge.
+Rebuild indexes after import as needed.
+Confirm before destructive operations.
+Encourage periodic backups because clearing browser storage can remove local data.
+16. Demo Data
+Provide optional demo data showing multiple projects and all major record types.
+Allow Load Demo Data and Clear Demo Data.
+Clearly distinguish demo data from user data.
+17. Analytics
+Hours per day/week/month.
+Average session length.
+Planned vs actual time.
+Task and goal completion.
+Current and longest streak.
+Active and missed days.
+Project comparisons by hours, completion, tasks and goals.
+Use charts only where they provide actionable insight.
+18. Progress Calculations
+Learning projects: Actual Hours / Target Hours × 100.
+General projects: primarily based on completed tasks and/or manual progress.
+Never allow progress above 100%.
+Document all calculation rules.
+19. Search, Validation & Error Handling
+Validate inputs and dates.
+Prevent negative durations and impossible percentages.
+Handle empty databases gracefully.
+Handle invalid/corrupted imports gracefully.
+Avoid duplicate imports where possible.
+Do not expose raw JavaScript errors to normal users.
+Provide useful empty states.
+20. Privacy & Security
+No mandatory login.
+No mandatory internet connection.
+No third-party tracking by default.
+No external service required for core features.
+Clearly document local-storage limitations.
+21. Performance
+Remain responsive with hundreds of projects and thousands of records.
+Use IndexedDB indexes appropriately.
+Avoid loading unnecessarily large datasets into the UI at once.
+Keep calculations efficient.
+22. Development Process
+Analyze the specification and identify contradictions or technical limitations.
+Propose the final architecture and technology choices.
+Define the database schema and relationships.
+Define UI/navigation and PWA strategy.
+Implement the foundation.
+Implement projects and daily tracking.
+Implement tasks, goals, issues and breakthroughs.
+Implement time tracking and analytics.
+Implement export/import and backup.
+Implement and test PWA/offline functionality.
+Polish accessibility, responsiveness, errors and performance.
+Complete documentation and final QA.
+23. Development Phases
+Phase
+Deliverables
+Phase 1 — Foundation
+Application shell, navigation, responsive layout, theme system, IndexedDB, data model.
+Phase 2 — Projects
+Create/edit/archive/delete, details, progress and project settings.
+Phase 3 — Daily Tracking
+Daily records, goals, hours, streaks and calendar.
+Phase 4 — Task Management
+Tasks, status, priority, due dates, time and filters.
+Phase 5 — Goals / Issues / Breakthroughs
+All three record types plus notes.
+Phase 6 — Time Tracking
+Time entries, duration calculations and planned vs actual.
+Phase 7 — Analytics
+Dashboard, productivity, consistency and project analytics.
+Phase 8 — Backup
+Export, import, merge/restore, validation and warnings.
+Phase 9 — PWA
+Manifest, service worker, caching, installation and offline tests.
+Phase 10 — Polish
+Accessibility, empty states, animations, responsive improvements and performance.
+24. Testing Requirements
+Functional: projects, tasks, goals, issues, breakthroughs, daily records and time entries.
+Persistence: reload and verify all records remain.
+Backup: export, import, restore, merge and invalid-file handling.
+Offline: disable internet and verify the application opens, reads, writes and calculates.
+PWA: installation, launch, offline launch, cache behavior and update behavior.
+Responsive: desktop, tablet and mobile.
+Edge cases: empty database, large dataset, duplicates, zero-hour projects, completed/overdue projects and missing dates.
+25. Documentation Deliverables
+Document
+Required Contents
+README.md
+Overview, features, stack, screenshots/placeholders, installation, usage, backup, deployment, development, browser compatibility and limitations.
+docs/installation.md
+Requirements, local setup, running locally, PWA installation and offline operation.
+docs/development.md
+Architecture, folder structure, coding conventions, database, state management, testing and release process.
+docs/database.md
+Database name, stores, fields, indexes, relationships, versioning and migration strategy.
+docs/user-guide.md
+Non-developer guide for projects, daily progress, hours, tasks, goals, issues, breakthroughs, analytics and backups.
+docs/deployment.md
+Deployment to GitHub Pages, Vercel, Netlify and generic static hosting; HTTPS/PWA requirements.
+docs/testing.md
+Test strategy, manual checklist, automated tests if any, offline/PWA/backup/browser testing.
+docs/architecture.md
+High-level architecture and important technical decisions.
+26. Installation & Sharing Model
+The application should be distributable as a static project.
+It should be deployable to GitHub Pages, Vercel, Netlify or another static host.
+No backend server should be required for core functionality.
+For full PWA behavior, use a suitable local server or HTTPS deployment as documented.
+The same application should be usable on supported desktop and mobile browsers and installable as a PWA.
+27. Future Expansion (Do Not Overbuild Version 1)
+Cloud synchronization and multi-device sync.
+User accounts and collaboration.
+AI project assistant / learning coach.
+Automatic progress summaries.
+CSV/PDF reports.
+Portfolio generation.
+GitHub and calendar integrations.
+Pomodoro/focus sessions.
+Habit and skill tracking.
+Learning roadmaps.
+Achievements/badges.
+Resource/library management.
+Version 1 should leave architectural room for these features but should not implement them unnecessarily.
+28. Final Quality Gate
+☐ Application launches successfully
+☐ No critical console errors
+☐ Project creation/editing/archive/deletion works
+☐ Multiple projects work
+☐ Tasks work
+☐ Goals work
+☐ Daily progress works
+☐ Hours tracking works
+☐ Issues work
+☐ Breakthroughs work
+☐ Calendar works
+☐ Analytics work
+☐ Search works
+☐ Export works
+☐ Import works
+☐ Data persists after reload
+☐ Offline mode works
+☐ PWA installation works
+☐ Responsive layout works
+☐ Dark mode works
+☐ Empty states work
+☐ Error handling works
+☐ Documentation is complete
+29. Final Delivery Report Required from Antigravity
+List every completed feature.
+List partially implemented features.
+List known limitations.
+List every dependency, version and purpose, including whether it is required at runtime.
+Specify supported browsers where practical.
+Provide exact installation and local-development steps.
+Provide deployment instructions.
+Provide backup and restore instructions.
+Explain PWA installation on Windows, Android and other supported platforms.
+Report testing performed and results.
+List unresolved issues.
+30. Non-Negotiable Development Rules
+1. Do not build the application around only the 35-day course.
+2. Do not introduce a backend unless there is a compelling reason.
+3. Do not introduce authentication.
+4. Do not make cloud storage mandatory.
+5. Do not make internet access mandatory.
+6. Do not sacrifice usability for excessive features.
+7. Do not create unnecessary complexity.
+8. Prioritize data integrity.
+9. Prioritize user ownership of data.
+10. Document every major feature.
+11. Do not declare completion without testing offline functionality.
+12. Do not declare completion without testing export/import.
+31. Success Definition
+The project is successful when the user can install Data Journey, create the 35-Day Data Analyst Journey, and use it every day for 35 days without needing an internet connection. At the end of the journey, the user should be able to clearly review what was worked on, how much time was spent, what was completed, what was difficult, what problems were solved, what was learned, what breakthroughs occurred, how consistent the user was, and what should happen next.
+32. Final Instruction to Antigravity
+Treat this document as the Product Requirements Document (PRD), technical specification and delivery checklist for Data Journey. Do not simply create a visual prototype. Build a functional, persistent, offline-first application that can actually be used as a long-term project and learning tracker.
+Analyze the specification before coding.
+Identify contradictions and technical limitations.
+Propose the final architecture.
+Explain technology choices and dependencies.
+Define the database schema.
+Define application structure and navigation.
+Build incrementally.
+Test every major feature.
+Test offline functionality and PWA installation.
+Test persistence and export/import.
+Complete all documentation.
+Perform the final quality audit.
+Deliver a final report explaining what was built, how to install/use/deploy it, and what limitations remain.
+END OF SPECIFICATION

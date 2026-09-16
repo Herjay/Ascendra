@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ascendra — Offline-First Learning &amp; Progress Tracker</title>
+  
+  <!-- SEO & Social Meta Tags -->
+  <meta name="description" content="Ascendra is a standalone, offline-first personal productivity, learning, and project tracker with persistent IndexedDB storage, PWA installability, and visual analytics.">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Ascendra">
+
+  <!-- Web App Manifest & Favicons -->
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/png" sizes="32x32" href="./assets/icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="64x64" href="./assets/icons/favicon-64.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="./assets/icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="./assets/icons/icon-512.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="./assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="./assets/icons/icon-512.png">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="./assets/css/tokens.css">
+  <link rel="stylesheet" href="./assets/css/base.css">
+  <link rel="stylesheet" href="./assets/css/components.css">
+  <link rel="stylesheet" href="./assets/css/welcome.css">
+  <link rel="stylesheet" href="./assets/css/print.css" media="print">
+
+  <script>
+    window.addEventListener('error', (e) => {
+      const errDiv = document.createElement('div');
+      errDiv.className = 'debug-error-log';
+      errDiv.textContent = 'ERR: ' + e.message + ' at ' + e.filename + ':' + e.lineno;
+      document.body ? document.body.appendChild(errDiv) : document.addEventListener('DOMContentLoaded', () => document.body.appendChild(errDiv));
+    });
+    window.addEventListener('unhandledrejection', (e) => {
+      const errDiv = document.createElement('div');
+      errDiv.className = 'debug-error-log';
+      errDiv.textContent = 'REJ: ' + (e.reason ? (e.reason.stack || e.reason.message || e.reason) : e);
+      document.body ? document.body.appendChild(errDiv) : document.addEventListener('DOMContentLoaded', () => document.body.appendChild(errDiv));
+    });
+  </script>
+</head>
+<body>
+  <!-- Mobile Sidebar Backdrop -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+  <div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo-icon" style="overflow: hidden; padding: 2px; background: #ffffff; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
+          <img src="./assets/icons/ascendra-logo.png" id="sidebarLogoImg" alt="Ascendra Logo" width="30" height="30" style="display: block; object-fit: contain;">
+        </div>
+        <div>
+          <span class="sidebar-brand-title">Ascendra</span>
+          <span style="display: block; font-size: 0.68rem; color: var(--text-muted); font-weight: 600; letter-spacing: 0.04em;">OFFLINE TRACKER</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Main Navigation">
+        <span class="nav-group-title">Overview</span>
+        <a href="#dashboard" class="nav-link active" id="navLinkDashboard">
+          <span class="nav-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="#projects" class="nav-link" id="navLinkProjects">
+          <span class="nav-icon">📁</span>
+          <span>Projects</span>
+        </a>
+
+        <span class="nav-group-title">Tracking &amp; Progress</span>
+        <a href="#daily" class="nav-link" id="navLinkDaily">
+          <span class="nav-icon">📅</span>
+          <span>Daily Progress</span>
+        </a>
+        <a href="#tasks" class="nav-link" id="navLinkTasks">
+          <span class="nav-icon">✓</span>
+          <span>Tasks</span>
+        </a>
+        <a href="#goals" class="nav-link" id="navLinkGoals">
+          <span class="nav-icon">🎯</span>
+          <span>Goals &amp; Milestones</span>
+        </a>
+        <a href="#issues" class="nav-link" id="navLinkIssues">
+          <span class="nav-icon">💡</span>
+          <span>Roadblocks &amp; Wins</span>
+        </a>
+
+        <span class="nav-group-title">Time &amp; Analytics</span>
+        <a href="#timetracker" class="nav-link" id="navLinkTimeTracker">
+          <span class="nav-icon">⏱</span>
+          <span>Time Tracking</span>
+        </a>
+        <a href="#calendar" class="nav-link" id="navLinkCalendar">
+          <span class="nav-icon">🗓</span>
+          <span>Calendar</span>
+        </a>
+        <a href="#analytics" class="nav-link" id="navLinkAnalytics">
+          <span class="nav-icon">📈</span>
+          <span>Analytics</span>
+        </a>
+
+        <span class="nav-group-title">Settings &amp; Data</span>
+        <a href="#backup" class="nav-link" id="navLinkBackup">
+          <span class="nav-icon">💾</span>
+          <span>Data &amp; Backups</span>
+        </a>
+        <a href="#welcome" class="nav-link" id="navLinkWelcome">
+          <span class="nav-icon">🚀</span>
+          <span>Welcome Page</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="active-project-pill" id="activeProjectPill">
+          <span class="pill-label">Active Project</span>
+          <span class="pill-name" id="activeProjectName">Loading...</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Shell -->
+    <div class="main-wrapper">
+      <!-- Offline & Connectivity Status Header -->
+      <div class="offline-status-banner" id="networkStatusBanner">
+        <div style="display: flex; align-items: center;">
+          <span class="status-indicator-dot" id="networkStatusDot"></span>
+          <span id="networkStatusText">Checking storage mode...</span>
+        </div>
+        <div style="font-size: 0.7rem; color: var(--text-muted);">
+          IndexedDB v1 • Self-Sufficient
+        </div>
+      </div>
+
+      <!-- Top Header Navigation -->
+      <header class="top-header">
+        <div class="header-left">
+          <button class="menu-toggle-btn" id="mobileMenuToggle" aria-label="Toggle Sidebar Menu">☰</button>
+          <span class="page-title" id="currentPageTitle">Dashboard</span>
+        </div>
+
+        <div class="header-center">
+          <div class="global-search-box">
+            <span class="search-icon-pos">🔍</span>
+            <input type="search" class="search-input" id="globalSearchInput" placeholder="Search tasks, reflections, breakthroughs (Ctrl+K)..." aria-label="Search records">
+            <!-- Search Results Dropdown -->
+            <div id="globalSearchResults" style="display: none; position: absolute; top: 110%; left: 0; right: 0; background: var(--bg-surface); border: 1px solid var(--border-medium); border-radius: var(--radius-lg); box-shadow: var(--shadow-xl); z-index: 150; max-height: 380px; overflow-y: auto;"></div>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <button class="btn btn-primary btn-sm" id="quickRecordProgressBtn" title="Quick record today's progress">
+            + Log Day
+          </button>
+          <button class="btn btn-ghost btn-icon" id="themeToggleBtn" aria-label="Toggle Theme" title="Switch to Light theme">☀️</button>
+        </div>
+      </header>
+
+      <!-- Main Scrollable Canvas for Views -->
+      <main class="main-content" id="viewContainer" role="main" data-boot="db-error: IndexedDB open timed out">
+        <!-- Dynamic module views injected here by Router -->
+      </main>
+    </div>
+  </div>
+
+  <!-- Main JavaScript Application Modules -->
+  <script type="module" src="./js/app.js"></script>
+
+
+</body></html>

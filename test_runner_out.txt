@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html><head>
+  <meta charset="utf-8">
+  <title>Test Runner</title>
+</head>
+<body>
+  <div id="test-results">RUNNING</div>
+  <script type="module">
+    try {
+      // 1. Import all modules to test for syntax / import errors
+      const results = [];
+      const log = (msg) => { results.push(msg); console.log(msg); };
+
+      log('Importing modules...');
+      const { Database } = await import('./js/database/db.js');
+      const { STORES } = await import('./js/database/schema.js');
+      const { DashboardModule } = await import('./js/modules/dashboard.js');
+      const { ProjectsModule } = await import('./js/modules/projects.js');
+      const { DailyModule } = await import('./js/modules/daily.js');
+      const { TasksModule } = await import('./js/modules/tasks.js');
+      const { GoalsModule } = await import('./js/modules/goals.js');
+      const { IssuesModule } = await import('./js/modules/issues.js');
+      const { TimeTrackerModule } = await import('./js/modules/timeTracker.js');
+      const { CalendarModule } = await import('./js/modules/calendar.js');
+      const { AnalyticsModule } = await import('./js/modules/analytics.js');
+      const { BackupModule } = await import('./js/modules/backup.js');
+      const { WelcomeModule } = await import('./js/modules/welcome.js');
+
+      log('All modules imported successfully.');
+
+      log('Testing Database.open()...');
+      const db = await Database.open();
+      log('Database.open() resolved: ' + db.name);
+
+      const projects = await Database.getAll(STORES.PROJECTS);
+      log('Projects count: ' + projects.length);
+
+      const testDiv = document.createElement('div');
+      document.body.appendChild(testDiv);
+
+      log('Testing WelcomeModule.render()...');
+      WelcomeModule.render(testDiv, () => log('onOpenApp callback fired'));
+      log('WelcomeModule rendered. Checking buttons...');
+
+      const openBtn = testDiv.querySelector('#welcomeHeroOpenBtn');
+      const installBtn = testDiv.querySelector('#welcomeHeroInstallBtn');
+      log('Open btn found: ' + Boolean(openBtn) + ', Install btn found: ' + Boolean(installBtn));
+
+      log('Clicking Open btn...');
+      openBtn.click();
+
+      log('Testing DashboardModule.render()...');
+      await DashboardModule.render(testDiv, projects[0] || null, () => {});
+      log('DashboardModule rendered successfully. Length: ' + testDiv.innerHTML.length);
+
+      document.getElementById('test-results').textContent = 'SUCCESS:\n' + results.join('\n');
+    } catch (err) {
+      console.error('Test error:', err);
+      document.getElementById('test-results').textContent = 'ERROR:\n' + err.stack;
+    }
+  </script>
+
+
+</body></html>
